@@ -92,5 +92,5 @@ sys_uptime(void)
 uint64
 sys_memsize(void)
 {
-  return 1;
+  return myproc()->sz;
 }
