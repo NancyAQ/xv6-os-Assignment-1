@@ -55,6 +55,7 @@ procinit(void)
       initlock(&p->lock, "proc");
       p->state = UNUSED;
       p->kstack = KSTACK((int) (p - proc));
+      p->affinity_mask=0; //task5
   }
 }
 
@@ -124,6 +125,7 @@ allocproc(void)
 found:
   p->pid = allocpid();
   p->state = USED;
+  p->affinity_mask=0; //task5
 
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
@@ -169,7 +171,8 @@ freeproc(struct proc *p)
   p->killed = 0;
   p->xstate = 0;
   p->state = UNUSED;
-  // p->exit_msg[0]=0; //Task3
+  p->affinity_mask=0; //task5
+  p->exit_msg[0]=0; //Task3
 }
 
 // Create a user page table for a given process, with no user memory,
@@ -296,6 +299,7 @@ fork(void)
     return -1;
   }
   np->sz = p->sz;
+  np->affinity_mask=p->affinity_mask; //task5
 
   // copy saved user registers.
   *(np->trapframe) = *(p->trapframe);
@@ -462,6 +466,11 @@ scheduler(void)
 {
   struct proc *p;
   struct cpu *c = mycpu();
+  //task5
+  push_off(); //disable interrupts 
+  int cpu_id= cpuid(); //interrupts must be disabled
+  pop_off();// restore interrupts to prev state
+  
   
   c->proc = 0;
   for(;;){
@@ -470,14 +479,20 @@ scheduler(void)
 
     for(p = proc; p < &proc[NPROC]; p++) {
       acquire(&p->lock);
-      if(p->state == RUNNABLE) {
+      int bin_rep=1;
+      for(int i=1;i<=cpu_id;i++){
+        bin_rep=bin_rep*2;
+      }
+      if(p->state == RUNNABLE && (p->affinity_mask==0 ||(bin_rep & p->affinity_mask))) { //added second condition(perform bitwise and)
+        printf("testing mask %d \n",bin_rep & p->affinity_mask);
         // Switch to chosen process.  It is the process's job
         // to release its lock and then reacquire it
         // before jumping back to us.
         p->state = RUNNING;
         c->proc = p;
+        printf("binary rep is %d and process id is %d\n",bin_rep,p->pid);
+        printf("process: %d is running on cpu: %d and its mask is %d\n", p->pid, cpu_id,p->affinity_mask); //printing for task 5
         swtch(&c->context, &p->context);
-
         // Process is done running for now.
         // It should have changed its p->state before coming back.
         c->proc = 0;
@@ -696,4 +711,14 @@ procdump(void)
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }
+}
+
+int set_affinity_mask(int mask_size){
+  push_off();
+  acquire(&myproc()->lock);
+  myproc()->affinity_mask=mask_size;
+  release(&myproc()->lock);
+  pop_off();
+  return 0;
+  
 }

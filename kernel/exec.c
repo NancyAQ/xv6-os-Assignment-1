@@ -74,6 +74,7 @@ exec(char *path, char **argv)
 
   p = myproc();
   uint64 oldsz = p->sz;
+  // p->affinity_mask=0; //task5
 
   // Allocate two pages at the next page boundary.
   // Make the first inaccessible as a stack guard.

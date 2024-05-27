@@ -98,3 +98,11 @@ sys_memsize(void)
 {
   return myproc()->sz;
 }
+uint64
+sys_set_affinity_mask(void) //task5
+{
+  int mask_size;
+  argint(0, &mask_size);
+  set_affinity_mask(mask_size);
+  return 0;
+}
