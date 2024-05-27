@@ -11,7 +11,9 @@ sys_exit(void)
 {
   int n;
   argint(0, &n);
-  exit(n);
+  char help_msg[32];
+  argstr(1,help_msg,32);
+  exit(n,help_msg);
   return 0;  // not reached
 }
 
@@ -31,8 +33,10 @@ uint64
 sys_wait(void)
 {
   uint64 p;
+  uint64 msg_p; //task 3
   argaddr(0, &p);
-  return wait(p);
+  argaddr(1,&msg_p);
+  return wait(p,msg_p); //added msg p
 }
 
 uint64

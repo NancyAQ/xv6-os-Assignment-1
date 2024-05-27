@@ -169,6 +169,7 @@ freeproc(struct proc *p)
   p->killed = 0;
   p->xstate = 0;
   p->state = UNUSED;
+  // p->exit_msg[0]=0; //Task3
 }
 
 // Create a user page table for a given process, with no user memory,
@@ -344,10 +345,9 @@ reparent(struct proc *p)
 // An exited process remains in the zombie state
 // until its parent calls wait().
 void
-exit(int status)
+exit(int status,char* msg)
 {
   struct proc *p = myproc();
-
   if(p == initproc)
     panic("init exiting");
 
@@ -376,6 +376,15 @@ exit(int status)
   acquire(&p->lock);
 
   p->xstate = status;
+  //Task 3
+  if(msg==0){ //string address is null
+      const char * replacement="No exit message";
+      strncpy(p->exit_msg,replacement,32);
+  }
+  else{
+    strncpy(p->exit_msg,msg,32);
+  }
+  //end task 3
   p->state = ZOMBIE;
 
   release(&wait_lock);
@@ -388,7 +397,7 @@ exit(int status)
 // Wait for a child process to exit and return its pid.
 // Return -1 if this process has no children.
 int
-wait(uint64 addr)
+wait(uint64 addr,uint64 msg_p) //task 3 added msg pointer
 {
   struct proc *pp;
   int havekids, pid;
@@ -408,8 +417,15 @@ wait(uint64 addr)
         if(pp->state == ZOMBIE){
           // Found one.
           pid = pp->pid;
-          if(addr != 0 && copyout(p->pagetable, addr, (char *)&pp->xstate,
+          if(addr != 0 && copyout(p->pagetable, addr, (char *)&pp->xstate, 
                                   sizeof(pp->xstate)) < 0) {
+            release(&pp->lock);
+            release(&wait_lock);
+            return -1;
+          }
+          //task 3 added copyout and same condition as above
+          if( msg_p!=0 && copyout(p->pagetable, msg_p, (char *)&pp->exit_msg, 
+                                  sizeof(pp->exit_msg))<0) {
             release(&pp->lock);
             release(&wait_lock);
             return -1;

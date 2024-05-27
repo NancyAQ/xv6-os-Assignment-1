@@ -13,5 +13,5 @@ main(int argc, char *argv[])
   free(help_arr);
   int z =memsize();
   fprintf(1,"current size process after freeing mem is %d \n",z);
-  exit(0);
+  exit(0,"");
 }
