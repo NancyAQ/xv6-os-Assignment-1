@@ -5,9 +5,9 @@
 int
 main(int argc, char *argv[])
 {
-  int mask=1;
+  int mask=16;
   set_affinity_mask(mask);
-  for(int i=0;i<10;i++){
+  for(int i=0;i<20;i++){
     fprintf(1,"id of process is %d \n", getpid());
   }
   return 0;
