@@ -106,4 +106,6 @@ struct proc {
   char name[16];               // Process name (debugging)
   char exit_msg[32]; //Task 3
   int affinity_mask; //task5
+  int effective_affinity_mask; //task 6
+  int last_cpu; //added for task 6
 };
