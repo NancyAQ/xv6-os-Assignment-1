@@ -9,10 +9,20 @@
 uint64
 sys_exit(void)
 {
+  // int n;
+  // argint(0, &n);
+  // char help_msg[32];
+  // argstr(1,help_msg,32);
+  // exit(n,help_msg);
+  // return 0;  // not reached
   int n;
   argint(0, &n);
   char help_msg[32];
   argstr(1,help_msg,32);
+  if(help_msg[0]=='\0'){ //string address is null
+      char replacement [16]="No exit message";
+      safestrcpy(help_msg,replacement,32);
+  }
   exit(n,help_msg);
   return 0;  // not reached
 }

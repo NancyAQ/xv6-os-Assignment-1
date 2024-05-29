@@ -73,6 +73,7 @@ exec(char *path, char **argv)
   ip = 0;
 
   p = myproc();
+  p->affinity_mask = 0;
   uint64 oldsz = p->sz;
   // p->affinity_mask=0; //task5
   // p->effective_affinity_mask=p->affinity_mask; //task6

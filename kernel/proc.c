@@ -385,15 +385,8 @@ exit(int status,char* msg)
   acquire(&p->lock);
 
   p->xstate = status;
-  //Task 3
-  if(msg==0){ //string address is null
-      const char * replacement="No exit message";
-      strncpy(p->exit_msg,replacement,32);
-  }
-  else{
-    strncpy(p->exit_msg,msg,32);
-  }
-  //end task 3
+  //task 3
+  strncpy(p->exit_msg,msg,32);
   p->state = ZOMBIE;
 
   release(&wait_lock);
