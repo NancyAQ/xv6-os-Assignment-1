@@ -107,5 +107,5 @@ struct proc {
   char exit_msg[32]; //Task 3
   int affinity_mask; //task5
   int effective_affinity_mask; //task 6
-  int last_cpu; //added for task 6
+  int is_old; //added for task 6
 };
