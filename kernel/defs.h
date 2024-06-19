@@ -84,7 +84,7 @@ void            printfinit(void);
 // proc.c
 int             cpuid(void);
 void            exit(int,char *); // task 3 added char, dont know if I should make it const
-int            set_affinity_mask(int); //added for task 5
+int             set_affinity_mask(int); //added for task 5
 int             fork(void);
 int             growproc(int);
 void            proc_mapstacks(pagetable_t);

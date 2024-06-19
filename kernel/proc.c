@@ -128,6 +128,7 @@ found:
   p->pid = allocpid();
   p->state = USED;
   p->affinity_mask=0; //task5
+  p->effective_affinity_mask=0; //task6
 
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
@@ -175,7 +176,7 @@ freeproc(struct proc *p)
   p->state = UNUSED;
   p->affinity_mask=0; //task5
   p->effective_affinity_mask=0; //task 6
-  p->is_old=-1;
+  p->is_old=0;
   p->exit_msg[0]=0; //Task3
 }
 
@@ -304,6 +305,7 @@ fork(void)
   }
   np->sz = p->sz;
   np->affinity_mask=p->affinity_mask; //task5
+  np->effective_affinity_mask=p->effective_affinity_mask; //task6
   np->is_old=-1;//task 6 
 
   // copy saved user registers.
@@ -386,7 +388,7 @@ exit(int status,char* msg)
 
   p->xstate = status;
   //task 3
-  strncpy(p->exit_msg,msg,32);
+  safestrcpy(p->exit_msg,msg,32);
   p->state = ZOMBIE;
 
   release(&wait_lock);
@@ -468,31 +470,22 @@ scheduler(void)
   push_off(); //disable interrupts 
   int cpu_id= cpuid(); //interrupts must be disabled
   pop_off();// restore interrupts to prev state
-  
-  
+  int bin_rep=1;
+  bin_rep=1 << cpu_id;
   c->proc = 0;
   for(;;){
     // Avoid deadlock by ensuring that devices can interrupt.
     intr_on();
-
     for(p = proc; p < &proc[NPROC]; p++) {
       acquire(&p->lock);
-      int bin_rep=1;
-      for(int i=1;i<=cpu_id;i++){
-        bin_rep=bin_rep*2;
-      }
-      // if(p->state == RUNNABLE && (p->affinity_mask==0 ||(bin_rep & p->affinity_mask))) { //added second condition(perform bitwise and) //if for task5
-      if(p->state == RUNNABLE && ((p->affinity_mask==0) ||((bin_rep & p->effective_affinity_mask)&&p->is_old>0))) { //if for task 6
-        printf("process: %d is running on cpu: %d and its effective mask is %d\n", p->pid, cpu_id,p->effective_affinity_mask); //printing for task 6;
-        // printf("testing mask %d \n",bin_rep & p->affinity_mask);
+      if(p->state == RUNNABLE && ((p->affinity_mask==0) ||((bin_rep & p->effective_affinity_mask)&&p->is_old > 0))) { //if for task 6
+        printf("process: %d is running on cpu: %d \n", p->pid, cpu_id); //printing for task 6;
         // Switch to chosen process.  It is the process's job
         // to release its lock and then reacquire it
         // before jumping back to us.
         p->state = RUNNING;
         // p->is_old=cpu_id;
         c->proc = p;
-        // printf("binary rep is %d and process id is %d\n",bin_rep,p->pid);
-        // printf("process: %d is running on cpu: %d and its mask is %d\n", p->pid, cpu_id,p->affinity_mask); //printing for task 5
         swtch(&c->context, &p->context);
         // Process is done running for now.
         p->is_old=1;
@@ -516,9 +509,6 @@ sched(void)
 {
   int intena;
   struct proc *p = myproc();
-  // if(p->effective_affinity_mask>0)
-  //   p->is_old=1;
-  // printf("effective mask is %d \n",p->effective_affinity_mask);
   if(!holding(&p->lock))
     panic("sched p->lock");
   if(mycpu()->noff != 1)
@@ -534,17 +524,13 @@ sched(void)
   int cpu_id=cpuid(); 
   pop_off();
   int bin_rep=1;
-  for(int i=1;i<=cpu_id;i++){
-    bin_rep=bin_rep*2;
-  } 
-  // printf("curr p %d cpu is %d effective mast %d and binary rep is %d and minus is %d and the last is %d\n",p->pid,cpu_id,p->effective_affinity_mask,bin_rep,p->effective_affinity_mask-bin_rep,p->is_old);
+  bin_rep=1 << cpu_id;
   if(p->is_old>0&& p->effective_affinity_mask>0&&p->effective_affinity_mask&bin_rep){
     p->effective_affinity_mask=p->effective_affinity_mask-bin_rep;
     }
   if(p->effective_affinity_mask<=0){ 
     p->effective_affinity_mask=p->affinity_mask;
   }
-  // p->is_old=1;
   swtch(&p->context, &mycpu()->context);
   mycpu()->intena = intena;
 }

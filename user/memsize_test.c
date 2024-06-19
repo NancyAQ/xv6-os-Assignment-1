@@ -7,7 +7,7 @@ main(int argc, char *argv[])
 {
   int i =memsize();
   fprintf(1,"current process size is %d \n",i);
-  int *help_arr=(int*) malloc(20*1024);
+  int *help_arr=(int*) malloc(20*1000);
   int j =memsize();
   fprintf(1,"current size process after alloc is %d \n",j);
   free(help_arr);

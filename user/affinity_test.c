@@ -8,7 +8,6 @@ main(int argc, char *argv[])
   int mask=5;
   set_affinity_mask(mask);
   for(;;){
-  // for(int i=0;i<=10;i++){
     int id=getpid();
     fprintf(1,"id of process is %d \n", id);
     sleep(1);
